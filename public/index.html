@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>NexusCollab — Humans &amp; Agents, Building Together</title>
+  <meta name="description" content="A WebMCP-powered collaborative knowledge platform where humans and AI agents co-create, research, and build together in real time."/>
+  <style>
+    :root{--bg:#0a0e1a;--surface:#111827;--surface2:#1a2234;--border:#1f2d45;--accent:#3b82f6;--accent2:#8b5cf6;--green:#10b981;--orange:#f59e0b;--red:#ef4444;--text:#e2e8f0;--muted:#64748b;--dim:#94a3b8;--r:10px;--sh:0 4px 24px rgba(0,0,0,.4)}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+    header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+    .logo{display:flex;align-items:center;gap:10px;font-size:1.25rem;font-weight:700}
+    .logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem}
+    .logo-text{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .hdr-r{display:flex;align-items:center;gap:12px}
+    .agent-status{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-size:.8rem}
+    .dot{width:8px;height:8px;border-radius:50%;background:var(--muted);transition:background .3s}
+    .dot.on{background:var(--green);animation:pulse 2s infinite}
+    .dot.err{background:var(--red)}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+    .btn{padding:8px 16px;border-radius:var(--r);border:none;cursor:pointer;font-size:.875rem;font-weight:600;transition:all .2s}
+    .btn-p{background:var(--accent);color:#fff}.btn-p:hover{background:#2563eb;transform:translateY(-1px)}
+    .btn-g{background:transparent;color:var(--dim);border:1px solid var(--border)}.btn-g:hover{background:var(--surface2);color:var(--text)}
+    .layout{display:grid;grid-template-columns:260px 1fr 300px;flex:1;overflow:hidden;height:calc(100vh - 60px)}
+    .sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+    .sb-sec{padding:14px;border-bottom:1px solid var(--border)}
+    .sb-title{font-size:.7rem;font-weight:700;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin-bottom:10px}
+    .main{display:flex;flex-direction:column;overflow:hidden}
+    .ed-hdr{padding:14px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+    .doc-title{font-size:1.3rem;font-weight:700;background:none;border:none;color:var(--text);flex:1;outline:none}
+    .doc-title::placeholder{color:var(--muted)}
+    .avatars{display:flex}
+    .av{width:28px;height:28px;border-radius:50%;border:2px solid var(--surface);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;margin-left:-4px}
+    .av:first-child{margin-left:0}.av-h{background:linear-gradient(135deg,#3b82f6,#8b5cf6)}.av-a{background:linear-gradient(135deg,#10b981,#06b6d4)}
+    .toolbar{padding:6px 22px;border-bottom:1px solid var(--border);display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+    .tb{padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--dim);cursor:pointer;font-size:.8rem;transition:all .15s}
+    .tb:hover{background:var(--border);color:var(--text)}
+    .ed-body{flex:1;overflow-y:auto;padding:20px}
+    .ed-content{min-height:100%;max-width:820px;margin:0 auto}
+    .blk{position:relative;margin:2px 0;border-radius:6px;transition:background .15s}
+    .blk:hover{background:rgba(255,255,255,.02)}
+    .bc{width:100%;background:none;border:none;color:var(--text);font-size:1rem;line-height:1.7;outline:none;resize:none;padding:4px 8px;font-family:inherit;min-height:28px}
+    .bc.heading1{font-size:2rem;font-weight:700}.bc.heading2{font-size:1.5rem;font-weight:600}.bc.heading3{font-size:1.2rem;font-weight:600}
+    .bc::placeholder{color:var(--muted)}
+    .ablk{background:rgba(16,185,129,.05);border-left:3px solid var(--green);padding-left:10px;margin:8px 0;border-radius:0 6px 6px 0}
+    .albl{font-size:.68rem;color:var(--green);font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-bottom:2px}
+    .rc{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin:12px 0}
+    .rc-title{font-size:.85rem;font-weight:600;color:var(--accent);margin-bottom:8px}
+    .rc p{font-size:.875rem;line-height:1.6;color:var(--dim)}
+    .rp{background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+    .tabs{display:flex;border-bottom:1px solid var(--border)}
+    .tab{flex:1;padding:11px;text-align:center;font-size:.78rem;font-weight:600;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;transition:all .15s}
+    .tab.on{color:var(--accent);border-bottom-color:var(--accent)}
+    .pc{flex:1;overflow-y:auto;padding:14px}
+    .act{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);font-size:.8rem}
+    .act:last-child{border-bottom:none}
+    .act-ic{font-size:1rem;flex-shrink:0;margin-top:1px}
+    .act-tx{color:var(--dim);line-height:1.5}.act-tx strong{color:var(--text)}
+    .act-tm{font-size:.68rem;color:var(--muted);margin-top:2px}
+    .tcc{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);margin-bottom:8px;overflow:hidden}
+    .tch{display:flex;align-items:center;gap:8px;padding:9px 11px;cursor:pointer}
+    .tcn{font-size:.78rem;font-weight:600;color:var(--accent);font-family:monospace;flex:1}
+    .tcs{font-size:.68rem;padding:2px 8px;border-radius:10px;font-weight:600}
+    .sp{background:rgba(245,158,11,.15);color:var(--orange)}.ss{background:rgba(16,185,129,.15);color:var(--green)}.se{background:rgba(239,68,68,.15);color:var(--red)}
+    .tcb{padding:0 11px 11px;font-size:.72rem;color:var(--dim);font-family:monospace;white-space:pre-wrap;display:none}
+    .tcb.open{display:block}
+    .sb2{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:10px}
+    .scard{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px;text-align:center}
+    .sv{font-size:1.4rem;font-weight:700;color:var(--accent)}.sl{font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+    .ai-area{border-top:1px solid var(--border);padding:12px}
+    .ai-row{display:flex;gap:8px}
+    .ai-inp{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 12px;font-size:.85rem;outline:none;font-family:inherit}
+    .ai-inp:focus{border-color:var(--accent)}.ai-inp::placeholder{color:var(--muted)}
+    .badge{background:linear-gradient(90deg,rgba(59,130,246,.1),rgba(139,92,246,.1));border:1px solid rgba(139,92,246,.3);border-radius:20px;padding:4px 12px;font-size:.68rem;font-weight:700;letter-spacing:.08em;color:var(--accent2)}
+    #toasts{position:fixed;bottom:20px;right:20px;z-index:1000;display:flex;flex-direction:column;gap:7px}
+    .toast{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:11px 15px;font-size:.82rem;box-shadow:var(--sh);display:flex;align-items:center;gap:10px;animation:sIn .3s ease;max-width:300px}
+    .toast.success{border-left:3px solid var(--green)}.toast.info{border-left:3px solid var(--accent)}.toast.warning{border-left:3px solid var(--orange)}
+    @keyframes sIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+    .ov{position:fixed;inset:0;background:rgba(10,14,26,.96);z-index:200;display:flex;align-items:center;justify-content:center}
+    .ov-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:36px;max-width:500px;width:90%;text-align:center}
+    .ov-icon{font-size:3rem;margin-bottom:14px;display:block}
+    .ov-card h2{font-size:1.7rem;margin-bottom:8px}
+    .ov-card>p{color:var(--dim);line-height:1.6;margin-bottom:22px}
+    .feats{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:24px;text-align:left}
+    .feat{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px;font-size:.78rem;color:var(--dim)}
+    .feat strong{display:block;color:var(--text);margin-bottom:3px;font-size:.82rem}
+    .kgn{display:inline-flex;align-items:center;gap:5px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:3px 9px;font-size:.72rem;margin:3px;cursor:pointer;transition:all .15s}
+    .kgn:hover{border-color:var(--accent);color:var(--accent)}
+    .tag{display:inline-block;padding:2px 7px;border-radius:4px;font-size:.68rem;font-weight:600;background:rgba(59,130,246,.1);color:var(--accent);margin:2px}
+    ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+    @media(max-width:1024px){.layout{grid-template-columns:240px 1fr}.rp{display:none}}
+    @media(max-width:640px){.layout{grid-template-columns:1fr}.sidebar{display:none}}
+  </style>
+</head>
+<body>
+
+<!-- Intro -->
+<div class="ov" id="ov">
+  <div class="ov-card">
+    <span class="ov-icon">🌐</span>
+    <h2>Welcome to NexusCollab</h2>
+    <p>A WebMCP-powered workspace where humans and AI agents co-create knowledge, research, and documents together in real time.</p>
+    <div class="feats">
+      <div class="feat"><strong>🤖 7 Agent Tools</strong>Rich WebMCP tools for writing, research &amp; knowledge</div>
+      <div class="feat"><strong>✍️ Live Co-editing</strong>Watch the agent write, block by block</div>
+      <div class="feat"><strong>🧠 Knowledge Graph</strong>Concepts extracted &amp; connected automatically</div>
+      <div class="feat"><strong>📚 Research Cards</strong>Structured citations inserted inline</div>
+    </div>
+    <button class="btn btn-p" onclick="startApp()" style="width:100%;padding:13px;font-size:1rem">Start Collaborating →</button>
+    <p style="margin-top:11px;font-size:.72rem;color:var(--muted)">Open in ChatGPT browser or Chrome with WebMCP enabled to activate agent tools</p>
+  </div>
+</div>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🌐</div>
+    <span class="logo-text">NexusCollab</span>
+  </div>
+  <div class="hdr-r">
+    <div class="agent-status"><div class="dot" id="dot"></div><span id="statusTxt">Waiting...</span></div>
+    <span class="badge">WebMCP</span>
+    <button class="btn btn-g" onclick="newDoc()">+ New Doc</button>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sb-sec">
+      <div class="sb-title">Documents</div>
+      <div id="docList"></div>
+    </div>
+    <div class="sb-sec" style="flex:1;overflow-y:auto">
+      <div class="sb-title">Knowledge Graph</div>
+      <div id="kg"></div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="ed-hdr">
+      <input class="doc-title" id="docTitle" type="text" placeholder="Untitled..." value="The Future of Human-Agent Collaboration"/>
+      <div class="avatars">
+        <div class="av av-h" title="You">Y</div>
+        <div class="av av-a" title="AI Agent">🤖</div>
+      </div>
+    </div>
+    <div class="toolbar">
+      <button class="tb" onclick="addBlk('heading1')">H1</button>
+      <button class="tb" onclick="addBlk('heading2')">H2</button>
+      <button class="tb" onclick="addBlk('heading3')">H3</button>
+      <button class="tb" onclick="addBlk('paragraph')">¶ Para</button>
+      <button class="tb" onclick="addBlk('bullet')">• List</button>
+      <span style="flex:1"></span>
+      <button class="tb" onclick="clearDoc()">🗑</button>
+      <button class="tb" onclick="exportMd()">⬇ MD</button>
+    </div>
+    <div class="ed-body">
+      <div class="ed-content" id="ec"></div>
+    </div>
+    <div class="ai-area">
+      <div class="ai-row">
+        <input class="ai-inp" id="inp" placeholder="Type a note, or ask your agent in ChatGPT to help..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendNote()}"/>
+        <button class="btn btn-p" onclick="sendNote()">Add</button>
+      </div>
+    </div>
+  </main>
+
+  <aside class="rp">
+    <div class="tabs">
+      <div class="tab on" onclick="switchTab('act',this)">Activity</div>
+      <div class="tab" onclick="switchTab('tools',this)">Tools</div>
+      <div class="tab" onclick="switchTab('stats',this)">Stats</div>
+    </div>
+    <div class="pc" id="pc"></div>
+  </aside>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  NexusCollab — WebMCP Collaborative Knowledge Editor
+//  https://github.com/peddipedderu/nexuscollab
+//  WebMCP Hackathon 2026
+// ═══════════════════════════════════════════════════════
+var S={acts:[],tools:[],kg:new Set(),stats:{calls:0,ins:0,cards:0,ann:0},connected:false,tab:'act',nid:1};
+
+// ── WebMCP ────────────────────────────────────────────
+async function registerTools(){
+  if(!document.modelContext){setStatus('warn','⚠ Demo mode');toast('info','💡 WebMCP not detected — running demo. Open in ChatGPT browser to activate.');runDemo();return;}
+  setStatus('pend','Registering…');
+  var ac=new AbortController();
+  try{
+    await document.modelContext.registerTool({name:'insert_content',title:'Insert Content',
+      description:'Insert a block of text, heading, or bullet list into the collaborative document. Call read_document first to understand context.',
+      inputSchema:{type:'object',properties:{content:{type:'string'},blockType:{type:'string',enum:['paragraph','heading1','heading2','heading3','bullet']},position:{type:'string',enum:['end','start']}},required:['content']},
+      async execute(a){return insContent(a.content,a.blockType||'paragraph',a.position||'end');}
+    },{signal:ac.signal});
+
+    await document.modelContext.registerTool({name:'read_document',title:'Read Document',
+      description:'Read the full text content of the current document. Returns title, all text blocks, and word count. Always call this before inserting to avoid duplication.',
+      inputSchema:{type:'object',properties:{},required:[]},
+      async execute(){return readDoc();}
+    },{signal:ac.signal});
+
+    await document.modelContext.registerTool({name:'add_knowledge_node',title:'Add Knowledge Node',
+      description:'Extract a key concept, technology, person, or idea and add it to the document knowledge graph sidebar.',
+      inputSchema:{type:'object',properties:{concept:{type:'string'},category:{type:'string',enum:['topic','technology','person','idea','place']},relatedTo:{type:'array',items:{type:'string'}}},required:['concept']},
+      async execute(a){return addKGNode(a.concept,a.category||'topic',a.relatedTo||[]);}
+    },{signal:ac.signal});
+
+    await document.modelContext.registerTool({name:'add_research_card',title:'Add Research Card',
+      description:'Insert a formatted research citation card with title, summary, optional URL and tags.',
+      inputSchema:{type:'object',properties:{title:{type:'string'},summary:{type:'string'},sourceUrl:{type:'string'},tags:{type:'array',items:{type:'string'}}},required:['title','summary']},
+      async execute(a){return addCard(a.title,a.summary,a.sourceUrl,a.tags||[]);}
+    },{signal:ac.signal});
+
+    await document.modelContext.registerTool({name:'add_annotation',title:'Add Annotation',
+      description:'Add a highlighted annotation block quoting text and adding a note.',
+      inputSchema:{type:'object',properties:{quote:{type:'string'},note:{type:'string'},color:{type:'string',enum:['blue','green','orange','red']}},required:['quote','note']},
+      async execute(a){return addAnn(a.quote,a.note,a.color||'blue');}
+    },{signal:ac.signal});
+
+    await document.modelContext.registerTool({name:'set_document_title',title:'Set Document Title',
+      description:'Update the title of the current document.',
+      inputSchema:{type:'object',properties:{title:{type:'string'}},required:['title']},
+      async execute(a){document.getElementById('docTitle').value=a.title;act('📝','Agent set title: <strong>'+h(a.title)+'</strong>');log('set_document_title',{title:a.title},'success','Updated');return{success:true};}
+    },{signal:ac.signal});
+
+    await document.modelContext.registerTool({name:'get_stats',title:'Get Stats',
+      description:'Get word count, block count, agent contribution metrics, and WebMCP connection status.',
+      inputSchema:{type:'object',properties:{},required:[]},
+      async execute(){return getStats();}
+    },{signal:ac.signal});
+
+    S.connected=true;setStatus('on','🤖 7 tools active');
+    act('🌐','<strong>WebMCP connected!</strong> 7 tools registered and ready.');
+    toast('success','✅ WebMCP active — 7 tools registered!');
+    if(S.tab==='tools')renderTools();
+  }catch(e){console.error(e);setStatus('err','❌ Failed');toast('warning','WebMCP error: '+e.message);runDemo();}
+}
+
+// ── Tool impls ────────────────────────────────────────
+function insContent(content,blockType,position){
+  var id='b'+(S.nid++);
+  var w=el('div','blk ablk');w.id=id;w.dataset.type=blockType;
+  var l=el('div','albl');l.textContent='🤖 Agent · '+blockType;
+  var ta=el('textarea','bc '+(blockType==='bullet'?'':blockType));
+  ta.rows=1;ta.addEventListener('input',resize);
+  w.append(l,ta);
+  var c=document.getElementById('ec');
+  position==='start'?c.prepend(w):c.append(w);
+  type(ta,content,function(){resize({target:ta});});
+  S.stats.calls++;S.stats.ins++;
+  act('✍️','Agent wrote <strong>'+blockType+'</strong>: "'+h(content.slice(0,55))+(content.length>55?'…':'')+'"');
+  log('insert_content',{blockType:blockType},'success','Block '+id+' ('+content.split(/\s+/).length+' words)');
+  updStats();
+  return{success:true,blockId:id,words:content.split(/\s+/).length};
+}
+
+function readDoc(){
+  var title=document.getElementById('docTitle').value;
+  var blocks=[].slice.call(document.querySelectorAll('#ec .blk'));
+  var content=blocks.map(function(b){
+    var ta=b.querySelector('.bc');
+    return{type:b.dataset.type||'paragraph',text:ta?ta.value:'',agentWritten:b.classList.contains('ablk')};
+  });
+  var wc=content.reduce(function(s,b){return s+b.text.split(/\s+/).filter(Boolean).length;},0);
+  act('📖','Agent read doc: <strong>'+blocks.length+' blocks</strong>, '+wc+' words');
+  log('read_document',{},'success',blocks.length+' blocks, '+wc+' words');
+  return{title:title,blockCount:blocks.length,wordCount:wc,content:content};
+}
+
+function addKGNode(concept,category,relatedTo){
+  S.kg.add(concept);
+  var g=document.getElementById('kg');
+  var nid='kn-'+concept.replace(/\W+/g,'-');
+  if(!document.getElementById(nid)){
+    var icons={topic:'🏷',technology:'⚙️',person:'👤',idea:'💡',place:'📍'};
+    var nd=el('div','kgn');nd.id=nid;
+    nd.title=category+(relatedTo.length?'\nRelated: '+relatedTo.join(', '):'');
+    nd.innerHTML=(icons[category]||'🏷')+' '+h(concept);
+    g.appendChild(nd);
+  }
+  S.stats.calls++;
+  act('🧠','Agent added concept: <strong>'+h(concept)+'</strong> ('+category+')');
+  log('add_knowledge_node',{concept:concept,category:category},'success','Total nodes: '+S.kg.size);
+  return{success:true,totalNodes:S.kg.size};
+}
+
+function addCard(title,summary,sourceUrl,tags){
+  S.stats.calls++;S.stats.cards++;
+  var id='rc'+(S.nid++);
+  var card=el('div','rc');card.id=id;card.dataset.type='research_card';
+  card.innerHTML='<div class="rc-title">📚 '+h(title)+'</div><p>'+h(summary)+'</p>'
+    +(sourceUrl?'<a href="'+h(sourceUrl)+'" target="_blank" rel="noopener" style="font-size:.72rem;color:var(--muted);display:block;margin-top:7px">🔗 '+h(sourceUrl)+'</a>':'')
+    +(tags.length?'<div style="margin-top:7px">'+tags.map(function(t){return'<span class="tag">'+h(t)+'</span>';}).join('')+'</div>':'');
+  document.getElementById('ec').appendChild(card);
+  act('📚','Agent added research card: <strong>'+h(title)+'</strong>');
+  log('add_research_card',{title:title},'success','Card '+id+' added');
+  updStats();return{success:true,blockId:id};
+}
+
+function addAnn(quote,note,color){
+  S.stats.calls++;S.stats.ann++;
+  var colors={blue:'#3b82f6',green:'#10b981',orange:'#f59e0b',red:'#ef4444'};
+  var c=colors[color]||colors.blue;
+  var d=el('div','blk ablk');d.style.borderLeftColor=c;d.dataset.type='annotation';
+  d.innerHTML='<div class="albl" style="color:'+c+'">📌 Annotation · '+color+'</div>'
+    +'<div style="font-size:.875rem;color:var(--dim);line-height:1.6;padding:4px 8px"><em>"'+h(quote)+'"</em><br/>'
+    +'<span style="color:var(--muted);font-size:.8rem;display:block;margin-top:4px">→ '+h(note)+'</span></div>';
+  document.getElementById('ec').appendChild(d);
+  act('📌','Agent annotated: <strong>'+h(note.slice(0,60))+'</strong>');
+  log('add_annotation',{color:color},'success','Annotation added');
+  return{success:true};
+}
+
+function getStats(){
+  var s=Object.assign({},S.stats,{knowledgeNodes:S.kg.size,blockCount:document.querySelectorAll('#ec .blk').length,title:document.getElementById('docTitle').value,webmcpEnabled:!!document.modelContext,tools:7});
+  log('get_stats',{},'success',JSON.stringify(s));return s;
+}
+
+// ── Typing animation ──────────────────────────────────
+function type(el,text,cb){
+  el.value='';var i=0;
+  var spd=Math.max(8,Math.min(35,1800/text.length));
+  var iv=setInterval(function(){el.value+=text[i++];if(i>=text.length){clearInterval(iv);if(cb)cb();}},spd);
+}
+
+// ── UI helpers ────────────────────────────────────────
+function el(tag,cls){var e=document.createElement(tag);if(cls)e.className=cls;return e;}
+function h(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function resize(e){var t=e.target;t.style.height='auto';t.style.height=t.scrollHeight+'px';}
+function setStatus(state,text){
+  var d=document.getElementById('dot');d.className='dot';
+  if(state==='on')d.classList.add('on');else if(state==='err')d.classList.add('err');
+  document.getElementById('statusTxt').textContent=text;
+}
+function act(icon,html){
+  var t=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  S.acts.unshift({icon:icon,html:html,t:t});if(S.acts.length>60)S.acts.pop();
+  if(S.tab==='act')renderAct();
+}
+function log(name,args,status,result){
+  S.tools.unshift({name:name,status:status,result:result,t:new Date().toLocaleTimeString()});
+  if(S.tools.length>30)S.tools.pop();if(S.tab==='tools')renderTools();
+}
+function toast(type,msg){
+  var c=document.getElementById('toasts');
+  var t=el('div','toast '+type);t.innerHTML=msg;c.appendChild(t);
+  setTimeout(function(){t.style.cssText='opacity:0;transition:opacity .3s';setTimeout(function(){t.remove();},300);},3500);
+}
+function updStats(){if(S.tab==='stats')renderStats();}
+
+// ── Editor ────────────────────────────────────────────
+function addBlk(type){
+  var w=el('div','blk');w.dataset.type=type;
+  var ta=el('textarea','bc '+(type==='bullet'?'':type));
+  ta.rows=1;ta.placeholder=type==='heading1'?'Heading…':type==='heading2'?'Subheading…':type==='bullet'?'• Item…':'Write…';
+  ta.addEventListener('input',resize);w.appendChild(ta);
+  document.getElementById('ec').appendChild(w);ta.focus();
+}
+function clearDoc(){if(!confirm('Clear all?'))return;document.getElementById('ec').innerHTML='';document.getElementById('kg').innerHTML='';S.kg.clear();S.stats={calls:0,ins:0,cards:0,ann:0};act('🗑','Document cleared.');updStats();}
+function newDoc(){clearDoc();document.getElementById('docTitle').value='Untitled Document';toast('info','📄 New document');}
+function exportMd(){
+  var title=document.getElementById('docTitle').value,md='# '+title+'\n\n';
+  document.querySelectorAll('#ec .blk').forEach(function(b){
+    var ta=b.querySelector('.bc');if(!ta||!ta.value.trim())return;
+    var type=b.dataset.type||'paragraph',text=ta.value;
+    if(type==='heading1')md+='# '+text+'\n\n';else if(type==='heading2')md+='## '+text+'\n\n';
+    else if(type==='heading3')md+='### '+text+'\n\n';else if(type==='bullet')md+='- '+text+'\n';else md+=text+'\n\n';
+  });
+  var a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([md],{type:'text/markdown'})),download:title+'.md'});a.click();
+  toast('success','⬇ Exported as Markdown');
+}
+function sendNote(){
+  var inp=document.getElementById('inp'),text=inp.value.trim();if(!text)return;inp.value='';
+  var w=el('div','blk');w.dataset.type='paragraph';
+  var ta=el('textarea','bc');ta.rows=1;ta.value=text;ta.addEventListener('input',resize);
+  w.appendChild(ta);document.getElementById('ec').appendChild(w);setTimeout(function(){resize({target:ta});},10);
+  act('👤','You wrote: <strong>"'+h(text.slice(0,60))+'"</strong>');
+}
+
+// ── Panels ────────────────────────────────────────────
+function switchTab(tab,elTab){
+  S.tab=tab;document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('on');});elTab.classList.add('on');
+  if(tab==='act')renderAct();else if(tab==='tools')renderTools();else renderStats();
+}
+function renderAct(){
+  var p=document.getElementById('pc');
+  if(!S.acts.length){p.innerHTML='<div style="color:var(--muted);font-size:.8rem;text-align:center;padding:22px">No activity yet</div>';return;}
+  p.innerHTML=S.acts.map(function(a){return'<div class="act"><div class="act-ic">'+a.icon+'</div><div><div class="act-tx">'+a.html+'</div><div class="act-tm">'+a.t+'</div></div></div>';}).join('');
+}
+function renderTools(){
+  var TOOLS=[
+    {n:'insert_content',d:'Write text/headings into document'},
+    {n:'read_document',d:'Read full document contents'},
+    {n:'add_knowledge_node',d:'Add concept to knowledge graph'},
+    {n:'add_research_card',d:'Insert structured research card'},
+    {n:'add_annotation',d:'Highlight & annotate sections'},
+    {n:'set_document_title',d:'Update document title'},
+    {n:'get_stats',d:'Get document statistics'},
+  ];
+  var p=document.getElementById('pc'),ok=S.connected;
+  p.innerHTML='<div style="font-size:.7rem;color:var(--muted);margin-bottom:10px">'+(ok?'✅ 7 tools active via WebMCP':'⚠ WebMCP not connected — demo mode')+'</div>'
+    +TOOLS.map(function(t){return'<div class="tcc"><div class="tch" onclick="this.nextElementSibling.classList.toggle(\'open\')"><span class="tcn">'+t.n+'</span><span class="tcs '+(ok?'ss':'sp')+'">'+(ok?'active':'standby')+'</span></div><div class="tcb">'+t.d+'</div></div>';}).join('')
+    +(S.tools.length?'<div style="margin-top:14px;font-size:.7rem;color:var(--muted);margin-bottom:7px">RECENT CALLS</div>'+S.tools.slice(0,6).map(function(c){return'<div class="tcc"><div class="tch" onclick="this.nextElementSibling.classList.toggle(\'open\')"><span class="tcn">'+c.name+'</span><span class="tcs '+({success:'ss',error:'se'}[c.status]||'sp')+'">'+c.status+'</span></div><div class="tcb">'+h(c.result||'')+'\n\n'+c.t+'</div></div>';}).join(''):'');
+}
+function renderStats(){
+  var p=document.getElementById('pc'),bc=document.querySelectorAll('#ec .blk').length;
+  p.innerHTML='<div class="sb2"><div class="scard"><div class="sv">'+S.stats.calls+'</div><div class="sl">Tool Calls</div></div>'
+    +'<div class="scard"><div class="sv">'+S.stats.ins+'</div><div class="sl">Agent Inserts</div></div>'
+    +'<div class="scard"><div class="sv">'+S.kg.size+'</div><div class="sl">KG Nodes</div></div></div>'
+    +'<div class="sb2"><div class="scard"><div class="sv">'+S.stats.cards+'</div><div class="sl">Research Cards</div></div>'
+    +'<div class="scard"><div class="sv">'+bc+'</div><div class="sl">Blocks</div></div>'
+    +'<div class="scard"><div class="sv">7</div><div class="sl">Tools</div></div></div>'
+    +'<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:.8rem;color:var(--dim)">'
+    +'<div style="font-weight:600;color:var(--text);margin-bottom:8px">WebMCP Integration</div>'
+    +'<div>API: <span style="color:'+(S.connected?'var(--green)':'var(--orange)')+'"> '+(S.connected?'✅ Connected':'⚠ Demo Mode')+'</span></div>'
+    +'<div style="margin-top:4px">Tools registered: <strong>7</strong></div>'
+    +'<div style="margin-top:4px">Schema: <strong>JSON Schema v4</strong></div>'
+    +'<div style="margin-top:4px">Lifecycle: <strong>AbortController</strong></div></div>';
+}
+
+// ── Demo ──────────────────────────────────────────────
+function runDemo(){
+  var steps=[
+    function(){insContent('WebMCP is an emerging open standard that lets websites expose structured tools directly to AI agents. Instead of agents guessing their way through a UI, developers define exactly what their app can do — enabling faster, more reliable collaboration.','paragraph','end');},
+    function(){addKGNode('WebMCP','technology',['AI Agents','Browser API','W3C']);},
+    function(){insContent('Why WebMCP Changes Everything','heading2','end');},
+    function(){addCard('Token Efficiency','WebMCP-enabled apps use up to 85% fewer tokens than DOM-scraping approaches, while achieving higher task completion rates.','https://webmachinelearning.github.io/webmcp/',['performance','agents','efficiency']);},
+    function(){insContent('Traditional agents must interpret raw HTML to understand a page. WebMCP eliminates this guesswork by providing a machine-readable interface of available actions — like an API, but for the open web.','paragraph','end');},
+    function(){addKGNode('AI Agents','technology',['WebMCP','Browser']);},
+    function(){addKGNode('document.modelContext','technology',['WebMCP']);},
+    function(){addAnn('document.modelContext.registerTool()','Core WebMCP API — standardized at W3C Web ML Community Group','green');},
+    function(){insContent('What Humans & Agents Build Together','heading2','end');},
+    function(){insContent('In NexusCollab, the agent reads the document, inserts content, extracts knowledge nodes, cites research, and annotates insights — without leaving the page. The human stays in control while the agent handles research and structuring.','paragraph','end');},
+    function(){addKGNode('Human-Agent Collaboration','idea',['WebMCP','NexusCollab']);},
+    function(){addCard('Open Web Standard','WebMCP is co-authored by Google and Microsoft engineers at the W3C Web Machine Learning Community Group, targeting Chrome and other browsers as a native browser API.','https://developer.chrome.com/docs/ai/webmcp',['web','standards','chrome']);},
+  ];
+  steps.forEach(function(fn,i){setTimeout(fn,1200+(i*1900));});
+}
+
+// ── Init ──────────────────────────────────────────────
+function startApp(){
+  document.getElementById('ov').style.display='none';
+  var w=el('div','blk');w.dataset.type='heading1';
+  var ta=el('textarea','bc heading1');ta.rows=1;ta.value='The Future of Human-Agent Collaboration';
+  ta.addEventListener('input',resize);w.appendChild(ta);
+  document.getElementById('ec').appendChild(w);setTimeout(function(){resize({target:ta});},10);
+  act('🚀','<strong>NexusCollab started!</strong> Registering WebMCP tools…');
+  renderAct();registerTools();
+}
+renderAct();
+act('🌐','NexusCollab loaded — click <strong>Start Collaborating</strong> to begin!');
+</script>
+</body>
+</html>

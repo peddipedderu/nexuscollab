@@ -1,0 +1,24 @@
+{
+  "name": "nexuscollab",
+  "version": "1.0.0",
+  "description": "WebMCP-powered collaborative knowledge platform — humans and AI agents building together",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.22.2"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "webmcp",
+    "ai",
+    "agents",
+    "collaboration",
+    "knowledge"
+  ],
+  "license": "MIT"
+}
